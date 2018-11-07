@@ -248,9 +248,15 @@
       }
 
       function displaySummary(summary) {
+        var entries = [];
+        for (var entry in summary) {
+          entries.push(summary[entry]);
+        }
+        entries.sort(function (a, b) {return b.durationRounded - a.durationRounded});
+
         var summaryEl = document.getElementById('summary');
-        for (var countryName in summary) {
-          var entry = summary[countryName]
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i];
           var message = (entry.country.flag || '') + ' ' + entry.country.name + ': ' + entry.durationRounded + ' дн.'
           var textContent = document.createTextNode(message);
           var para = document.createElement('p')
@@ -275,7 +281,7 @@
             var para = document.createElement('p');
             para.appendChild(document.createTextNode(FLIGHT_EMOJI + ' '));
             para.appendChild(link);
-            para.appendChild(document.createTextNode(' (' + flight.start.format('LL') + ')'));
+            para.appendChild(document.createTextNode(' ' + flight.start.format('LL')));
 
             flightsEl.appendChild(para);
           }
