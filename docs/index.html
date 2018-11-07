@@ -1,9 +1,10 @@
 <html>
   <head>
-  <style>
-    h2 {font-family: sans-serif}
-    #content {font-family: sans-serif}
-  </style>
+    <meta charset="utf-8">
+    <style>
+      h2 {font-family: sans-serif}
+      #content {font-family: sans-serif}
+    </style>
   </head>
   <body>
   <h2>Время в странах</h2>
@@ -29,7 +30,37 @@
       var authorizeButton = document.getElementById('authorize_button');
       var signoutButton = document.getElementById('signout_button');
 
-      var CALENDAR_ID = 'ud09dfh62ug8p47bahfjmbomj4@group.calendar.google.com'
+      var CALENDAR_ID = 'ud09dfh62ug8p47bahfjmbomj4@group.calendar.google.com';
+
+      var events;
+
+      var COUNTRIES = [
+        {
+          name: 'Россия',
+          // U+1F1F7, U+1F1FA
+          flag: '🇷🇺'
+        },
+        {
+          name: 'Англия',
+          // U+1F1EC, U+1F1E7
+          flag: '🇬🇧'
+        },
+        {
+          name: 'Италия',
+          // U+1F1EE, U+1F1F9
+          flag: '🇮🇹'
+        },
+        {
+          name: 'США',
+          // U+1F1FA, U+1F1F8
+          flag: '🇺🇸'
+        },
+        {
+          name: 'Китай',
+          // U+1F1E8, U+1F1F3
+          flag: '🇨🇳'
+        }
+      ];
 
       /**
        *  On load, called to load the auth2 library and API client library.
@@ -102,6 +133,17 @@
         pre.appendChild(para);
       }
 
+      function appendLink(message, href) {
+        var pre = document.getElementById('content');
+        var para = document.createElement('p');
+        var link = document.createElement('a');
+        var linkContent = document.createTextNode(message);
+        link.appendChild(linkContent);
+        link.href = href;
+        para.appendChild(link);
+        pre.appendChild(para);
+      }
+
       /**
        * Print the summary and start datetime/date of the next ten events in
        * the authorized user's calendar. If no events are found an
@@ -116,8 +158,12 @@
           'maxResults': 20,
           'orderBy': 'startTime'
         }).then(function(response) {
-          var events = response.result.items;
-          appendPre('Upcoming events:');
+          // global for now
+          events = response.result.items;
+          appendPre('вылеты:');
+
+          console.log("events:");
+          console.log(events);
 
           if (events.length > 0) {
             for (i = 0; i < events.length; i++) {
@@ -126,7 +172,7 @@
               if (!when) {
                 when = event.start.date;
               }
-              appendPre(event.summary + ' (' + when + ')')
+              appendLink(event.summary, event.htmlLink)
             }
           } else {
             appendPre('No upcoming events found.');
