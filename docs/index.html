@@ -152,8 +152,22 @@
         // for debugging;
         window.calendarEvents = events;
 
-        var flights = [];
+        var flights = makeFlights(events);
+        window.flights = flights;
 
+        var stays = makeStays(flights);
+        window.stays = stays;
+
+        var summary = makeSummary(flights, stays);
+        window.summary = summary;
+
+        displayResults();
+        displaySummary(summary);
+        displayFlights(flights, stays);
+      }
+
+      function makeFlights(events) {
+        var flights = [];
         for (i = 0; i < events.length; i++) {
           var event = events[i];
 
@@ -177,8 +191,10 @@
           };
           flights.push(flight)
         }
-        window.flights = flights;
+        return flights;
+      }
 
+      function makeStays(flights) {
         // FIXME will break soon
         var yearAgoPlace = {
           country: COUNTRIES.find(function (c) {return c.name == "Россия"}),
@@ -204,9 +220,10 @@
           }
           stays.push(stay)
         }
+        return stays
+      }
 
-        window.stays = stays;
-
+      function makeSummary(flights, stays) {
         var summary = {};
         for (i = 0; i < stays.length; i++) {
           var stay = stays[i];
@@ -222,13 +239,7 @@
           entry.durationMinutes += stay.durationMinutes;
           entry.durationRounded += stay.durationRounded;
         }
-
-        // debugging
-        window.summary = summary;
-
-        displayResults();
-        displaySummary(summary);
-        displayFlights(flights, stays);
+        return summary
       }
 
       function displayResults() {
