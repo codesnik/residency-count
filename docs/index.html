@@ -3,18 +3,19 @@
     <meta charset="utf-8">
     <style>
       h2 {font-family: sans-serif}
-      #content {font-family: sans-serif}
-      p {margin: 0.3em}
+      #results {font-family: sans-serif}
+      p {margin: 0}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/locale/ru.js"></script>
   </head>
   <body>
-    <div id="results" style="display: hidden">
+    <div id="results" style="display: none">
       <h2>Страны</h2>
       <div id="summary"></div>
       <h2>Рейсы и остановки</h2>
       <div id="flights"></div>
+      <hr>
     </div>
 
     <!--Add buttons to initiate auth sequence and sign out-->
@@ -67,9 +68,12 @@
           flag: '🇨🇳'
         },
         {
-          name: COUNTRIES_OTHER
+          name: COUNTRIES_OTHER,
+          flag: '🏳️'
         }
       ];
+
+      var FLIGHT_EMOJI = '✈️';
 
       /**
        *  On load, called to load the auth2 library and API client library.
@@ -222,8 +226,14 @@
         // debugging
         window.summary = summary;
 
+        displayResults();
         displaySummary(summary);
         displayFlights(flights, stays);
+      }
+
+      function displayResults() {
+        var resultsEl = document.getElementById('results');
+        results.style.display = "block";
       }
 
       function displaySummary(summary) {
@@ -245,15 +255,15 @@
         for (var i = stays.length-1; i >= 0; i--) {
           var flight = flights[i];
           if (flight) {
-            var linkContent = document.createTextNode(flight.title);
 
+            var linkContent = document.createTextNode(flight.title);
             var link = document.createElement('a');
             link.appendChild(linkContent);
             link.href = flight.htmlLink;
             link.target = "_blank";
             var para = document.createElement('p');
+            para.appendChild(document.createTextNode(FLIGHT_EMOJI + ' '));
             para.appendChild(link);
-
             para.appendChild(document.createTextNode(' (' + flight.start.format('LL') + ')'));
 
             flightsEl.appendChild(para);
