@@ -11,6 +11,7 @@
   </head>
   <body>
     <div id="results" style="display: none">
+      <h3 id="date"></h3>
       <h2>Страны</h2>
       <div id="summary"></div>
       <h2>Рейсы и остановки</h2>
@@ -162,6 +163,7 @@
         window.summary = summary;
 
         displayResults();
+        displayDate();
         displaySummary(summary);
         displayFlights(flights, stays);
       }
@@ -245,6 +247,13 @@
       function displayResults() {
         var resultsEl = document.getElementById('results');
         results.style.display = "block";
+      }
+
+      function displayDate() {
+        var message = moment().format('ll');
+        var textContent = document.createTextNode(message);
+        var dateEl = document.getElementById('date');
+        dateEl.appendChild(textContent)
       }
 
       function displaySummary(summary) {
