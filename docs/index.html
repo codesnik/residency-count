@@ -143,13 +143,13 @@
           // 'maxResults': 20,
           'orderBy': 'startTime'
         }).then(function(response) {
-          // global for now
           var events = response.result.items;
           processEvents(events)
         });
       }
 
       function processEvents(events) {
+        // global for now
         // for debugging;
         window.calendarEvents = events;
 
@@ -177,8 +177,6 @@
           var end = event.end && (event.end.dateTime || event.end.date);
           var summary = event.summary;
           var countryName = summary.split(" ")[0] || COUNTRIES_OTHER;
-          var country = COUNTRIES.find(function (c) {return c.name == countryName}) ||
-            COUNTRIES.find(function (c) {return c.name == COUNTRIES_OTHER});
           // end of the summary
           var title = summary.split(" ").slice(1).join(" ");
           var flight = {
@@ -188,7 +186,6 @@
             end: moment(end),
             title: title,
             countryName: countryName,
-            country: country,
             htmlLink: event.htmlLink
           };
           flights.push(flight)
@@ -199,11 +196,12 @@
       function makeStays(flights) {
         // FIXME will break soon
         var yearAgoPlace = {
-          country: COUNTRIES.find(function (c) {return c.name == "Россия"}),
+          countryName: "Россия",
+          start: moment().subtract(1, 'year'),
           end: moment().subtract(1, 'year')
         };
         var currentPlace = {
-          country: flights[flights.length-1].country,
+          countryName: flights[flights.length-1].countryName,
           start: moment()
         };
         var stays = [];
@@ -212,11 +210,10 @@
           var flight2 = flights[i] || currentPlace;
           // minutes
           var durationMinutes = (flight2.start - flight1.end)/1000/60;
-          // rounding to nearest 0.5 days!
           var durationRounded = Math.round(durationMinutes/60/24);
-          var country = flight1.country;
+          var countryName = flight1.countryName;
           var stay = {
-            country: country,
+            countryName: countryName,
             durationMinutes: durationMinutes,
             durationRounded: durationRounded
           }
@@ -229,10 +226,10 @@
         var summary = {};
         for (i = 0; i < stays.length; i++) {
           var stay = stays[i];
-          var countryName = stay.country.name;
+          var countryName = stay.countryName;
           if (!summary[countryName]) {
             summary[countryName] = {
-              country: stay.country,
+              countryName: countryName,
               durationMinutes: 0,
               durationRounded: 0,
             }
@@ -266,7 +263,7 @@
         var summaryEl = document.getElementById('summary');
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i];
-          var message = (entry.country.flag || '') + ' ' + entry.country.name + ': ' + entry.durationRounded + ' дн.'
+          var message = getFlag(entry.countryName) + ' ' + entry.countryName + ': ' + entry.durationRounded + ' дн.';
           var textContent = document.createTextNode(message);
           var para = document.createElement('p')
           para.appendChild(textContent);
@@ -297,12 +294,18 @@
 
           var stay = stays[i];
 
-          var message = (stay.country.flag || '') + ' ' + stay.country.name + ': ' + stay.durationRounded + ' дн.'
+          var message = getFlag(stay.countryName) + ' ' + stay.countryName + ': ' + stay.durationRounded + ' дн.';
           var messageNode = document.createTextNode(message)
           var para = document.createElement('p');
           para.appendChild(messageNode);
           flightsEl.appendChild(para);
         }
+      }
+
+      function getFlag(countryName) {
+        var country = COUNTRIES.find(function (c) {return c.name == countryName}) ||
+          COUNTRIES.find(function (c) {return c.name == COUNTRIES_OTHER});
+        return country.flag;
       }
     </script>
 
