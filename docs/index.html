@@ -41,6 +41,7 @@
 
       var CALENDAR_ID = 'ud09dfh62ug8p47bahfjmbomj4@group.calendar.google.com';
 
+      var DEFAULT_COUNTRY = 'Россия';
       var COUNTRIES_OTHER = 'другие страны';
       var COUNTRIES = [
         {
@@ -172,6 +173,8 @@
         displayFlights(flights, stays);
       }
 
+      // parse flights from calendar events, make a list of flights in
+      // reverse order (most recent - first)
       function makeFlights(events) {
         var flights = [];
         for (i = 0; i < events.length; i++) {
@@ -180,6 +183,7 @@
           var start = event.start.dateTime || event.start.date;
           var end = event.end && (event.end.dateTime || event.end.date);
           var summary = event.summary;
+          // country we're flying into
           var countryName = summary.split(" ")[0] || COUNTRIES_OTHER;
           // end of the summary
           var title = summary.split(" ").slice(1).join(" ");
@@ -192,36 +196,44 @@
             countryName: countryName,
             htmlLink: event.htmlLink
           };
-          flights.push(flight)
+          // TODO skip future flights
+          flights.unshift(flight)
         }
         return flights;
       }
 
+      // calculate country stays for the last year.
       function makeStays(flights) {
         // FIXME will break soon
-        var yearAgoPlace = {
-          countryName: "Россия",
-          start: moment().subtract(1, 'year'),
-          end: moment().subtract(1, 'year')
-        };
-        var currentPlace = {
-          countryName: flights[flights.length-1].countryName,
-          start: moment()
-        };
+        var yearAgo = moment().subtract(1, 'year');
+        var now = moment();
         var stays = [];
+        var yearEnd = { start: now };
+        var yearStart = { end: yearAgo, countryName: DEFAULT_COUNTRY };
         for (i = 0; i <= flights.length; i++) {
-          var flight1 = flights[i-1] || yearAgoPlace;
-          var flight2 = flights[i] || currentPlace;
+          var departureFlight = flights[i-1] || yearEnd;
+          var arrivalFlight = flights[i] || yearStart;
+          var countryName = arrivalFlight.countryName;
+          var stayEnd = departureFlight.start;
+          if (arrivalFlight.end < yearAgo) {
+            stayStart = yearAgo
+          } else {
+            stayStart = arrivalFlight.end;
+          }
           // minutes
-          var durationMinutes = (flight2.start - flight1.end)/1000/60;
+          var durationMinutes = (stayEnd - stayStart)/1000/60;
           var durationRounded = Math.round(durationMinutes/60/24);
-          var countryName = flight1.countryName;
           var stay = {
             countryName: countryName,
+            start: stayStart,
+            end: stayEnd,
             durationMinutes: durationMinutes,
             durationRounded: durationRounded
           }
           stays.push(stay)
+          if (arrivalFlight.end < yearAgo) {
+            break
+          }
         }
         return stays
       }
@@ -279,7 +291,14 @@
         var flightsEl = document.getElementById('flights');
 
         // reverse order. Stays are surrounding flights
-        for (var i = stays.length-1; i >= 0; i--) {
+        for (var i = 0; i < stays.length; i++) {
+          var stay = stays[i];
+
+          var message = getFlag(stay.countryName) + ' ' + stay.countryName + ': ' + stay.durationRounded + ' дн.';
+          var messageNode = document.createTextNode(message)
+          var para = document.createElement('p');
+          para.appendChild(messageNode);
+          flightsEl.appendChild(para);
           var flight = flights[i];
           if (flight) {
 
@@ -296,13 +315,6 @@
             flightsEl.appendChild(para);
           }
 
-          var stay = stays[i];
-
-          var message = getFlag(stay.countryName) + ' ' + stay.countryName + ': ' + stay.durationRounded + ' дн.';
-          var messageNode = document.createTextNode(message)
-          var para = document.createElement('p');
-          para.appendChild(messageNode);
-          flightsEl.appendChild(para);
         }
       }
 
