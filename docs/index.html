@@ -325,8 +325,10 @@
           para.appendChild(messageNode);
           flightsEl.appendChild(para);
           var flight = flights[i];
-          if (flight) {
-
+          var firstFlight = (i == stays.length-1);
+          // do not show first flight at the end, it could be outside of
+          // period
+          if (flight && !firstFlight) {
             var linkContent = document.createTextNode(flight.title);
             var link = document.createElement('a');
             link.appendChild(linkContent);
