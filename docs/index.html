@@ -12,6 +12,9 @@
   <body>
     <div id="results" style="display: none">
       <h3 id="date"></h3>
+      <div id="date_controls">
+        <label><input type="checkbox" id="start_from_new_year" /> календарный год</label>
+      </div>
       <h2>Страны</h2>
       <div id="summary"></div>
       <h2>Рейсы и остановки</h2>
@@ -148,27 +151,49 @@
           // 'maxResults': 20,
           'orderBy': 'startTime'
         }).then(function(response) {
-          var events = response.result.items;
-          processEvents(events)
+          window.calendarEvents = response.result.items;
+          recalculate();
         });
+      }
+
+      // handlers for all the controls
+      function initControls() {
+        document.getElementById("start_from_new_year").onclick = function() {
+          recalculate()
+          return true;
+        }
+      }
+
+      function recalculate() {
+        console.log("recalculating");
+        if (window.calendarEvents) {
+          processEvents(window.calendarEvents)
+        }
       }
 
       function processEvents(events) {
         // global for now
         // for debugging;
-        window.calendarEvents = events;
+        var startDate;
+        if (document.getElementById("start_from_new_year").checked) {
+          startDate = moment().startOf('year')
+        } else {
+          startDate = moment().subtract(1, 'year')
+        }
+        var endDate = moment();
 
         var flights = makeFlights(events);
         window.flights = flights;
 
-        var stays = makeStays(flights);
+        var stays = makeStays(flights, startDate, endDate);
         window.stays = stays;
 
         var summary = makeSummary(flights, stays);
         window.summary = summary;
 
         displayResults();
-        displayDate();
+
+        displayDate(startDate, endDate);
         displaySummary(summary);
         displayFlights(flights, stays);
       }
@@ -203,20 +228,17 @@
       }
 
       // calculate country stays for the last year.
-      function makeStays(flights) {
-        // FIXME will break soon
-        var yearAgo = moment().subtract(1, 'year');
-        var now = moment();
+      function makeStays(flights, startDate, endDate) {
         var stays = [];
-        var yearEnd = { start: now };
-        var yearStart = { end: yearAgo, countryName: DEFAULT_COUNTRY };
+        var yearEnd = { start: endDate };
+        var yearStart = { end: startDate, countryName: DEFAULT_COUNTRY };
         for (i = 0; i <= flights.length; i++) {
           var departureFlight = flights[i-1] || yearEnd;
           var arrivalFlight = flights[i] || yearStart;
           var countryName = arrivalFlight.countryName;
           var stayEnd = departureFlight.start;
-          if (arrivalFlight.end < yearAgo) {
-            stayStart = yearAgo
+          if (arrivalFlight.end < startDate) {
+            stayStart = startDate
           } else {
             stayStart = arrivalFlight.end;
           }
@@ -231,7 +253,7 @@
             durationRounded: durationRounded
           }
           stays.push(stay)
-          if (arrivalFlight.end < yearAgo) {
+          if (arrivalFlight.end < startDate) {
             break
           }
         }
@@ -262,10 +284,11 @@
         results.style.display = "block";
       }
 
-      function displayDate() {
-        var message = moment().format('ll');
+      function displayDate(startDate, endDate) {
+        var message = startDate.format('ll') + ' — ' + endDate.format('ll');
         var textContent = document.createTextNode(message);
         var dateEl = document.getElementById('date');
+        dateEl.innerHTML = "";
         dateEl.appendChild(textContent)
       }
 
@@ -277,6 +300,7 @@
         entries.sort(function (a, b) {return b.durationRounded - a.durationRounded});
 
         var summaryEl = document.getElementById('summary');
+        summaryEl.innerHTML = "";
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i];
           var message = getFlag(entry.countryName) + ' ' + entry.countryName + ': ' + entry.durationRounded + ' дн.';
@@ -289,6 +313,7 @@
 
       function displayFlights(flights, stays) {
         var flightsEl = document.getElementById('flights');
+        flightsEl.innerHTML = "";
 
         // reverse order. Stays are surrounding flights
         for (var i = 0; i < stays.length; i++) {
@@ -323,6 +348,8 @@
           COUNTRIES.find(function (c) {return c.name == COUNTRIES_OTHER});
         return country.flag;
       }
+
+      initControls();
     </script>
 
     <script async defer src="https://apis.google.com/js/api.js"
