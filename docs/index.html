@@ -211,40 +211,43 @@
       }
 
       function filterEventsForPassenger(events, passenger) {
-        if (!passenger) { return events }
-        var eventsForPassenger = [];
-        for (var i=0; i<events.length; i++) {
-          var attendees = events[i].attendees;
-          if (attendees) {
-            for (var j=0; j<attendees.length; j++) {
-              if (attendees[j].email == passenger) {
-                eventsForPassenger.push(events[i])
-              }
-            }
-          }
+        if (!passenger) {
+          // copy
+          return events.slice()
         }
+        var eventsForPassenger = [];
+        events.forEach( function(event) {
+          var attendees = event.attendees;
+          if (attendees) {
+            attendees.forEach( function(attendee) {
+              if (attendee.email == passenger) {
+                eventsForPassenger.push(event)
+              }
+            });
+          }
+        });
         return eventsForPassenger;
       }
 
       function getPassengers(events) {
         var passengerDict = {};
-        for (var i=0; i<calendarEvents.length; i++) {
-          var attendees = calendarEvents[i].attendees;
+        calendarEvents.forEach( function(calendarEvent) {
+          var attendees = calendarEvent.attendees;
           if (attendees) {
-            for (var j=0; j<attendees.length; j++) {
-              passengerDict[attendees[j].email] = true
-            }
+            attendees.forEach( function(attendee) {
+              passengerDict[attendee.email] = true
+            });
           }
-        }
+        });
         return Object.keys(passengerDict);
       }
 
       function populatePassengerSelector(passengers) {
         var selector = document.getElementById("passenger_select");
         selector.options.length = 0;
-        for (var i = 0; i < passengers.length; i++) {
-          selector.options[i] = new Option(passengers[i], passengers[i]);
-        }
+        passengers.forEach( function(passenger) {
+          selector.options[selector.options.length] = new Option(passenger, passenger);
+        });
         selector.options[selector.options.length] = new Option("путешествующий не указан", "", true, true);
       }
 
@@ -252,9 +255,7 @@
       // reverse order (most recent - first)
       function makeFlights(events) {
         var flights = [];
-        for (i = 0; i < events.length; i++) {
-          var event = events[i];
-
+        events.forEach( function(event) {
           var start = event.start.dateTime || event.start.date;
           var end = event.end && (event.end.dateTime || event.end.date);
           var summary = event.summary;
@@ -273,7 +274,7 @@
           };
           // TODO skip future flights
           flights.unshift(flight)
-        }
+        });
         return flights;
       }
 
@@ -312,8 +313,7 @@
 
       function makeSummary(flights, stays) {
         var summary = {};
-        for (i = 0; i < stays.length; i++) {
-          var stay = stays[i];
+        stays.forEach( function(stay) {
           var countryName = stay.countryName;
           if (!summary[countryName]) {
             summary[countryName] = {
@@ -325,7 +325,7 @@
           var entry = summary[countryName];
           entry.durationMinutes += stay.durationMinutes;
           entry.durationRounded += stay.durationRounded;
-        }
+        });
         return summary
       }
 
@@ -351,14 +351,13 @@
 
         var summaryEl = document.getElementById('summary');
         summaryEl.innerHTML = "";
-        for (var i = 0; i < entries.length; i++) {
-          var entry = entries[i];
+        entries.forEach( function(entry) {
           var message = getFlag(entry.countryName) + ' ' + entry.countryName + ': ' + entry.durationRounded + ' дн.';
           var textContent = document.createTextNode(message);
           var para = document.createElement('p')
           para.appendChild(textContent);
           summaryEl.appendChild(para);
-        }
+        })
       }
 
       function displayFlights(flights, stays) {
