@@ -274,8 +274,10 @@
             endTz: endTz,
             end: moment.tz(end, endTz),
             title: title,
+            description: event.description,
             countryName: countryName,
-            htmlLink: event.htmlLink
+            htmlLink: event.htmlLink,
+            attachments: event.attachments
           };
           // TODO skip future flights
           flights.unshift(flight)
@@ -390,9 +392,23 @@
             link.target = "_blank";
             var para = document.createElement('p');
             para.appendChild(document.createTextNode(FLIGHT_EMOJI + ' '));
+            var dateSpan = document.createElement('span');
+            dateSpan.appendChild(document.createTextNode(flight.start.format('LL')));
+            dateSpan.title = flight.start.format() + ' ' + flight.end.format() + '\n' + flight.description;
+            para.appendChild(dateSpan);
+            para.appendChild(document.createTextNode(' '));
             para.appendChild(link);
-            para.appendChild(document.createTextNode(' ' + flight.start.format('LL')));
-
+            if (flight.attachments) {
+              flight.attachments.forEach( function(attachment) {
+                para.appendChild(document.createTextNode(' '));
+                var attachLink = document.createElement('a');
+                attachLink.href = attachment.fileUrl;
+                var attachImg = document.createElement('img');
+                attachImg.src = attachment.iconLink;
+                attachLink.appendChild(attachImg);
+                para.appendChild(attachLink)
+              })
+            }
             flightsEl.appendChild(para);
           }
 
