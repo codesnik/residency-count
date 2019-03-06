@@ -8,6 +8,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/locale/ru.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.23/moment-timezone-with-data-2012-2022.js"></script>
   </head>
   <body>
     <div id="results" style="display: none">
@@ -257,7 +258,9 @@
         var flights = [];
         events.forEach( function(event) {
           var start = event.start.dateTime || event.start.date;
+          var startTz = event.start.timeZone;
           var end = event.end && (event.end.dateTime || event.end.date);
+          var endTz = event.end.timeZone;
           var summary = event.summary;
           // country we're flying into
           var countryName = summary.split(" ")[0] || COUNTRIES_OTHER;
@@ -265,9 +268,11 @@
           var title = summary.split(" ").slice(1).join(" ");
           var flight = {
             startStr: start,
-            start: moment(start),
+            startTz: startTz,
+            start: moment.tz(start, startTz),
             endStr: end,
-            end: moment(end),
+            endTz: endTz,
+            end: moment.tz(end, endTz),
             title: title,
             countryName: countryName,
             htmlLink: event.htmlLink
