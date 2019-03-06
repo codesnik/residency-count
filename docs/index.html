@@ -13,6 +13,7 @@
     <div id="results" style="display: none">
       <h3 id="date"></h3>
       <div id="date_controls">
+        <select id="passenger_select"></select>
         <label><input type="checkbox" id="start_from_new_year" /> календарный год</label>
       </div>
       <h2>Страны</h2>
@@ -152,35 +153,37 @@
           'orderBy': 'startTime'
         }).then(function(response) {
           window.calendarEvents = response.result.items;
+          window.passengers = getPassengers(window.calendarEvents);
+          populatePassengerSelector(window.passengers);
           recalculate();
         });
       }
 
       // handlers for all the controls
       function initControls() {
-        document.getElementById("start_from_new_year").onclick = function() {
-          recalculate()
-          return true;
-        }
+        document.getElementById("start_from_new_year").onclick = recalculate;
+        document.getElementById("passenger_select").onchange = recalculate;
       }
 
       function recalculate() {
         console.log("recalculating");
         if (window.calendarEvents) {
-          processEvents(window.calendarEvents)
+          var startDate;
+          if (document.getElementById("start_from_new_year").checked) {
+            startDate = moment().startOf('year')
+          } else {
+            startDate = moment().subtract(1, 'year')
+          }
+          var endDate = moment();
+          var passenger = document.getElementById("passenger_select").value;
+          var events = filterEventsForPassenger(window.calendarEvents, passenger);
+          processEvents(events, startDate, endDate)
         }
       }
 
-      function processEvents(events) {
+      function processEvents(events, startDate, endDate) {
         // global for now
         // for debugging;
-        var startDate;
-        if (document.getElementById("start_from_new_year").checked) {
-          startDate = moment().startOf('year')
-        } else {
-          startDate = moment().subtract(1, 'year')
-        }
-        var endDate = moment();
 
         var flights = makeFlights(events);
         window.flights = flights;
@@ -196,6 +199,44 @@
         displayDate(startDate, endDate);
         displaySummary(summary);
         displayFlights(flights, stays);
+      }
+
+      function filterEventsForPassenger(events, passenger) {
+        if (!passenger) { return events }
+        var eventsForPassenger = [];
+        for (var i=0; i<events.length; i++) {
+          var attendees = events[i].attendees;
+          if (attendees) {
+            for (var j=0; j<attendees.length; j++) {
+              if (attendees[j].email == passenger) {
+                eventsForPassenger.push(events[i])
+              }
+            }
+          }
+        }
+        return eventsForPassenger;
+      }
+
+      function getPassengers(events) {
+        var passengerDict = {};
+        for (var i=0; i<calendarEvents.length; i++) {
+          var attendees = calendarEvents[i].attendees;
+          if (attendees) {
+            for (var j=0; j<attendees.length; j++) {
+              passengerDict[attendees[j].email] = true
+            }
+          }
+        }
+        return Object.keys(passengerDict);
+      }
+
+      function populatePassengerSelector(passengers) {
+        var selector = document.getElementById("passenger_select");
+        selector.options.length = 0;
+        for (var i = 0; i < passengers.length; i++) {
+          selector.options[i] = new Option(passengers[i], passengers[i]);
+        }
+        selector.options[selector.options.length] = new Option("путешествующий не указан", "", true, true);
       }
 
       // parse flights from calendar events, make a list of flights in
@@ -325,10 +366,10 @@
           para.appendChild(messageNode);
           flightsEl.appendChild(para);
           var flight = flights[i];
-          var firstFlight = (i == stays.length-1);
+          var isFirstFlight = (i == stays.length-1);
           // do not show first flight at the end, it could be outside of
           // period
-          if (flight && !firstFlight) {
+          if (flight && !isFirstFlight) {
             var linkContent = document.createTextNode(flight.title);
             var link = document.createElement('a');
             link.appendChild(linkContent);
