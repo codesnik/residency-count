@@ -211,22 +211,21 @@
       }
 
       function filterEventsForPassenger(events, passenger) {
-        if (!passenger) {
+        if (passenger == "all") {
           // copy
           return events.slice()
         }
-        var eventsForPassenger = [];
-        events.forEach( function(event) {
+        if (passenger == "none") {
+          return events.filter( function(event) {
+            return !event.attendees
+          })
+        }
+        return events.filter( function(event) {
           var attendees = event.attendees;
-          if (attendees) {
-            attendees.forEach( function(attendee) {
-              if (attendee.email == passenger) {
-                eventsForPassenger.push(event)
-              }
-            });
-          }
+          return (attendees && attendees.some( function(attendee) {
+            return (attendee.email == passenger)
+          }));
         });
-        return eventsForPassenger;
       }
 
       function getPassengers(events) {
@@ -248,7 +247,8 @@
         passengers.forEach( function(passenger) {
           selector.options[selector.options.length] = new Option(passenger, passenger);
         });
-        selector.options[selector.options.length] = new Option("путешествующий не указан", "", true, true);
+        selector.options[selector.options.length] = new Option("все", "all", true, true);
+        selector.options[selector.options.length] = new Option("не указан", "none", false, false);
       }
 
       // parse flights from calendar events, make a list of flights in
