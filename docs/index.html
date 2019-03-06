@@ -14,7 +14,11 @@
       <h3 id="date"></h3>
       <div id="date_controls">
         <select id="passenger_select"></select>
-        <label><input type="checkbox" id="start_from_new_year" /> календарный год</label>
+        <select id="calculation_period">
+          <option value="from_new_year_till_today" selected>календарный год</option>
+          <option value="from_new_year_till_the_end">прогноз на конец года</option>
+          <option value="from_year_ago">365 дней</option>
+        </select>
       </div>
       <h2>Страны</h2>
       <div id="summary"></div>
@@ -161,20 +165,25 @@
 
       // handlers for all the controls
       function initControls() {
-        document.getElementById("start_from_new_year").onclick = recalculate;
+        document.getElementById("calculation_period").onchange = recalculate;
         document.getElementById("passenger_select").onchange = recalculate;
       }
 
       function recalculate() {
         console.log("recalculating");
         if (window.calendarEvents) {
-          var startDate;
-          if (document.getElementById("start_from_new_year").checked) {
-            startDate = moment().startOf('year')
-          } else {
+          var startDate, endDate;
+          var period = document.getElementById("calculation_period").value;
+          if (period == "from_year_ago") {
             startDate = moment().subtract(1, 'year')
+          } else {
+            startDate = moment().startOf('year')
           }
-          var endDate = moment();
+          if (period == "from_new_year_till_the_end") {
+            endDate = moment().endOf("year");
+          } else {
+            endDate = moment();
+          }
           var passenger = document.getElementById("passenger_select").value;
           var events = filterEventsForPassenger(window.calendarEvents, passenger);
           processEvents(events, startDate, endDate)
